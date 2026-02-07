@@ -1,40 +1,38 @@
-import requests
-import os
-
 import os
 import requests
 from typing import Dict, Any, Optional
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+TMDB_ACCESS_TOKEN = os.getenv("TMDB_API_KEY")  # Bearer token
 
 
 class TMDbClient:
     """
-    Client wrapper for The Movie Database (TMDb) API.
+    TMDb API client using Bearer token authentication.
 
-    Supports:
-    - Search (text-based queries)
-    - Discover (filtered queries)
-    - Find (external ID lookup)
+    Supported operations:
+    - search (text-based)
+    - discover (filter-based)
+    - movie details
+    - movie videos
     """
 
     def __init__(self) -> None:
-        if not TMDB_API_KEY:
-            raise RuntimeError("TMDB_API_KEY is not set")
+        if not TMDB_ACCESS_TOKEN:
+            raise RuntimeError("TMDB_API_KEY (Bearer token) is not set")
 
         self.session = requests.Session()
-        self.session.params = {
-            "api_key": TMDB_API_KEY,
-        }
+        self.session.headers.update(
+            {
+                "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+                "Accept": "application/json",
+            }
+        )
 
     # -------------------------
-    # /search
+    # /search/movie
     # -------------------------
     def search_movies(self, query: str, page: int = 1) -> Dict[str, Any]:
-        """
-        Search movies by text query.
-        """
         return self._get(
             "/search/movie",
             params={
@@ -45,19 +43,15 @@ class TMDbClient:
         )
 
     # -------------------------
-    # /discover
+    # /discover/movie
     # -------------------------
     def discover_movies(
         self,
         *,
         sort_by: str = "popularity.desc",
         min_vote_average: Optional[float] = None,
-        primary_release_year: Optional[int] = None,
         page: int = 1,
     ) -> Dict[str, Any]:
-        """
-        Discover movies using filters.
-        """
         params = {
             "sort_by": sort_by,
             "page": page,
@@ -66,34 +60,32 @@ class TMDbClient:
         if min_vote_average is not None:
             params["vote_average.gte"] = min_vote_average
 
-        if primary_release_year is not None:
-            params["primary_release_year"] = primary_release_year
-
         return self._get("/discover/movie", params=params)
 
     # -------------------------
-    # /find
+    # /movie/{id}
     # -------------------------
-    def find_by_external_id(
+    def get_movie_details(
         self,
-        external_id: str,
-        external_source: str = "imdb_id",
+        movie_id: int,
+        append_videos: bool = False,
     ) -> Dict[str, Any]:
-        """
-        Find a movie, TV show, or person by an external ID.
-        """
-        return self._get(
-            f"/find/{external_id}",
-            params={"external_source": external_source},
-        )
+        params = {}
+        if append_videos:
+            params["append_to_response"] = "videos"
+
+        return self._get(f"/movie/{movie_id}", params=params)
 
     # -------------------------
-    # Internal helper
+    # /movie/{id}/videos
     # -------------------------
-    def _get(self, path: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Internal GET request helper with error handling.
-        """
+    def get_movie_videos(self, movie_id: int) -> Dict[str, Any]:
+        return self._get(f"/movie/{movie_id}/videos")
+
+    # -------------------------
+    # internal helper
+    # -------------------------
+    def _get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = f"{TMDB_BASE_URL}{path}"
         response = self.session.get(url, params=params, timeout=10)
 
