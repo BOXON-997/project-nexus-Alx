@@ -1,21 +1,16 @@
-from django.shortcuts import render
-from django.core.cache import cache
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .services.tmdb import get_trending_movies
-
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
-from .models import Movie, Favorite
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
+from movies.services.tmdb import TMDbClient
+
+client = TMDbClient()
 
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def discover_movies(request):
-    """
-    Discover movies using TMDb filters.
-    Defaults to trending (popularity.desc).
-    """
     sort_by = request.query_params.get("sort_by", "popularity.desc")
     min_rating = request.query_params.get("min_rating")
 
@@ -25,12 +20,31 @@ def discover_movies(request):
     )
     return Response(data)
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def add_favorite(request):
-    movie_id = request.data["tmdb_id"]
-    movie, _ = Movie.objects.get_or_create(tmdb_id=movie_id, defaults={
-        "title": request.data.get("title", "")
-    })
-    Favorite.objects.get_or_create(user=request.user, movie=movie)
-    return Response({"message": "Added to favorites"})
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def search_movies(request):
+    query = request.query_params.get("q")
+    if not query:
+        return Response(
+            {"error": "Query parameter 'q' is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    data = client.search_movies(query=query)
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def movie_details(request, movie_id: int):
+    append = request.query_params.get("append_videos") == "true"
+    data = client.get_movie_details(movie_id, append_videos=append)
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def movie_videos(request, movie_id: int):
+    data = client.get_movie_videos(movie_id)
+    return Response(data)
