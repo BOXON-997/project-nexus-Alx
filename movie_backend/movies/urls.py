@@ -1,7 +1,8 @@
 from django.urls import path
-from . import views
+from .views import discover_movies, search_movies, find_movie_by_external_id
 
 urlpatterns = [
-    path("trending/", views.trending_movies, name="trending-movies"),
-    # add more movie endpoints here later
+    path("discover/", discover_movies, name="discover-movies"),
+    path("search/", search_movies, name="search-movies"),
+    path("find/<str:external_id>/", find_movie_by_external_id, name="find-movie"),
 ]
