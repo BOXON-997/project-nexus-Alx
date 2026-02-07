@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies (REQUIRED for Pillow)
+# System dependencies (Pillow, psycopg2, etc.)
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
@@ -17,11 +17,12 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy project files
+# Project files
 COPY . .
 
-EXPOSE 8000
+# START THE APP (THIS WAS MISSING)
+CMD ["gunicorn", "--chdir", "movie_backend", "movie_backend.wsgi:application"]

@@ -8,8 +8,7 @@ services:
       sh -c "
       python movie_backend/manage.py migrate &&
       python movie_backend/manage.py collectstatic --noinput &&
-      # gunicorn --chdir movie_backend movie_backend.wsgi:application --bind 0.0.0.0:8000
-      CMD gunicorn --chdir movie_backend movie_backend.wsgi:application --bind 0.0.0.0:$PORT
+      gunicorn --chdir movie_backend movie_backend.wsgi:application --bind 0.0.0.0:8000
       "
     volumes:
       - .:/app
