@@ -10,15 +10,20 @@ from .models import Movie, Favorite
 
 
 @api_view(["GET"])
-def trending_movies(request):
-    cache_key = "trending_movies"
-    movies = cache.get(cache_key)
+@permission_classes([AllowAny])
+def discover_movies(request):
+    """
+    Discover movies using TMDb filters.
+    Defaults to trending (popularity.desc).
+    """
+    sort_by = request.query_params.get("sort_by", "popularity.desc")
+    min_rating = request.query_params.get("min_rating")
 
-    if not movies:
-        movies = get_trending_movies()
-        cache.set(cache_key, movies, timeout=60 * 60)
-
-    return Response(movies)
+    data = client.discover_movies(
+        sort_by=sort_by,
+        min_vote_average=float(min_rating) if min_rating else None,
+    )
+    return Response(data)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
