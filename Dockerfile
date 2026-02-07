@@ -25,4 +25,4 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . .
 
 # START THE APP (THIS WAS MISSING)
-CMD ["gunicorn", "--chdir", "movie_backend", "movie_backend.wsgi:application"]
+CMD ["gunicorn", "--chdir", "movie_backend", "movie_backend.wsgi:application", "--bind", "0.0.0.0:${PORT}"]
