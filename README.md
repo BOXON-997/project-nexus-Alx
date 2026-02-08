@@ -62,11 +62,18 @@ The application is fully containerized and can be run using Docker Compose.
 ```bash
 docker compose -f docker-compose-nexus.yaml up --build
 ```
+### Deployed On Render use the following url to test:
+```
+https://project-nexus-backend-s9x9.onrender.com/api/docs/
+https://project-nexus-backend-s9x9.onrender.com/api/movies/search/?q=Rambo
+https://project-nexus-backend-s9x9.onrender.com/api/movies/movie/343611/
+
+```
 
 ### Querying using postman
 
 ```
-http://localhost/api/movies/search/?q=Rambo
+
 ```
 
 ### Output below in JSON format:
